@@ -144,16 +144,16 @@ router.delete('/forget-all', async (req: AuthRequest, res) => {
     const { sessionId, agentId } = req.query;
     const userId = req.user!.id;
 
-    let query = db.delete(memories).where(eq(memories.userId, userId));
-    
+    // Build where conditions
+    const conditions: any[] = [eq(memories.userId, userId)];
     if (sessionId) {
-      query = query.where(eq(memories.sessionId, sessionId as string));
+      conditions.push(eq(memories.sessionId, sessionId as string));
     }
     if (agentId) {
-      query = query.where(eq(memories.agentId, agentId as string));
+      conditions.push(eq(memories.agentId, agentId as string));
     }
 
-    const result = await query.returning();
+    const result = await db.delete(memories).where(and(...conditions)).returning();
 
     res.json({ 
       success: true, 
