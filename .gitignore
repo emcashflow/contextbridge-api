@@ -1,7 +1,8 @@
 # Dependencies
 node_modules/
-package-lock.json
-yarn.lock
+# Lock files needed for Render deployment
+# package-lock.json
+# yarn.lock
 pnpm-lock.yaml
 
 # Build
