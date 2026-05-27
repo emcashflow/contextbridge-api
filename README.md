@@ -1,74 +1,57 @@
-# ContextBridge
+# ContextBridge API
 
 Give your AI agents persistent memory.
 
-**Problem:** AI agents forget everything when the session ends.  
-**Solution:** ContextBridge provides simple, persistent memory for any AI agent.
+## Quick Start
 
-## 🚀 Quick Start
-
-### 1. Sign up
-Get your API key at [contextbridge.io](https://contextbridge.io)
-
-### 2. Install SDK
 ```bash
-npm install @contextbridge/sdk
+# Install dependencies
+npm install
+
+# Set up database
+cp .env.example .env
+# Edit .env with your DATABASE_URL
+
+# Run migrations
+npm run db:migrate
+
+# Start dev server
+npm run dev
 ```
 
-### 3. Use it
-```typescript
-import { ContextBridge } from '@contextbridge/sdk';
+## API Endpoints
 
-const cb = new ContextBridge({ apiKey: 'your-key' });
+### Authentication
+- `POST /auth/signup` - Create account
+- `POST /auth/login` - Get API key
 
-// Store a memory
-await cb.remember("User prefers dark mode");
+### Memories (requires API key header: `X-API-Key`)
+- `POST /memories/remember` - Store a memory
+- `GET /memories/recall` - Retrieve memories
+- `DELETE /memories/forget/:id` - Delete one memory
+- `DELETE /memories/forget-all` - Delete all memories
 
-// Later... it remembers!
-const { memories } = await cb.recall();
-```
+## Environment Variables
 
-## 📦 Packages
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | Required |
+| `PORT` | Server port | 3000 |
+| `CORS_ORIGIN` | Allowed CORS origins | * |
 
-| Package | Description |
-|---------|-------------|
-| [`@contextbridge/sdk`](./sdk) | JavaScript/TypeScript SDK |
-| [`@contextbridge/api`](./api) | Self-hosted API server |
+## Deployment
 
-## 🏗️ Architecture
+### Railway (Recommended)
+1. Connect GitHub repo to Railway
+2. Add PostgreSQL database
+3. Deploy automatically
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Your App   │────▶│    SDK      │────▶│    API      │
-│  (Agent)    │◀────│  (Client)   │◀────│  (Server)   │
-└─────────────┘     └─────────────┘     └──────┬──────┘
-                                               │
-                                               ▼
-                                        ┌─────────────┐
-                                        │ PostgreSQL  │
-                                        └─────────────┘
-```
+### Render
+1. Create Web Service
+2. Add PostgreSQL database
+3. Set environment variables
+4. Deploy
 
-## 🛠️ Self-Hosting
+## License
 
-See [api/README.md](./api/README.md) for deployment instructions.
-
-### One-Click Deploy
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/YOUR_TEMPLATE_ID)
-
-## 💰 Pricing
-
-| Plan | Price | Operations | Memories |
-|------|-------|------------|----------|
-| Hobby | Free | 10K/month | 1,000 |
-| Pro | $49/mo | 100K/month | Unlimited |
-| Business | $199/mo | 1M/month | Unlimited |
-
-## 📄 License
-
-MIT - See [LICENSE](./LICENSE)
-
-## 🙏 Credits
-
-Built by the [Solo Software Guide](https://solosoftwareguide.com) team.
+MIT
