@@ -1,0 +1,21 @@
+{
+  "name": "@contextbridge/sdk",
+  "version": "1.0.0",
+  "description": "ContextBridge SDK - Give your AI agents persistent memory",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "keywords": ["ai", "memory", "context", "agents", "llm"],
+  "author": "ContextBridge",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}
