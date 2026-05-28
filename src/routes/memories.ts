@@ -41,15 +41,6 @@ router.post('/remember', enforceApiLimit, enforceMemoryLimit, async (req: AuthRe
       const retentionDays = PLAN_LIMITS[plan].retentionDays;
       expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000);
     }
-    
-    console.log('Creating memory:', { 
-      userId, 
-      content: parsed.content.substring(0, 50), 
-      expiresAt: expiresAt?.toISOString(),
-      expiresAtType: typeof expiresAt,
-      insertDataExpiresAt: insertData.expiresAt,
-      insertDataExpiresAtType: typeof insertData.expiresAt
-    });
 
     const insertData: any = {
       userId,
@@ -61,6 +52,15 @@ router.post('/remember', enforceApiLimit, enforceMemoryLimit, async (req: AuthRe
     if (parsed.agentId) insertData.agentId = parsed.agentId;
     // Pass ISO string directly - Drizzle will handle it
     if (expiresAt) insertData.expiresAt = expiresAt.toISOString();
+    
+    console.log('Creating memory:', { 
+      userId, 
+      content: parsed.content.substring(0, 50), 
+      expiresAt: expiresAt?.toISOString(),
+      expiresAtType: typeof expiresAt,
+      insertDataExpiresAt: insertData.expiresAt,
+      insertDataExpiresAtType: typeof insertData.expiresAt
+    });
     
     const [memory] = await db.insert(memories).values(insertData).returning();
 
