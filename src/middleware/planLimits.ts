@@ -104,7 +104,7 @@ export async function enforceApiLimit(
     if (!lastReset || !isSameDay(now, lastReset)) {
       // Reset counter
       await db.update(users)
-        .set({ dailyApiCalls: 0, lastApiCallReset: now })
+        .set({ dailyApiCalls: 0, lastApiCallReset: sql`NOW()` })
         .where(eq(users.id, userId));
       currentCalls = 0;
     }
