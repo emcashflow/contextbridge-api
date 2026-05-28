@@ -51,7 +51,7 @@ router.post('/remember', enforceApiLimit, enforceMemoryLimit, async (req: AuthRe
     if (parsed.sessionId) insertData.sessionId = parsed.sessionId;
     if (parsed.agentId) insertData.agentId = parsed.agentId;
     // Use SQL template literal for timestamp to ensure proper serialization
-    if (expiresAt) insertData.expiresAt = sql`${expiresAt.toISOString()}`;
+    if (expiresAt) insertData.expiresAt = sql`to_timestamp(${expiresAt.getTime() / 1000})`;
     
     console.log('Creating memory:', { 
       userId, 
