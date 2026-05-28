@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { authMiddleware } from './middleware/auth';
 import authRoutes from './routes/auth';
 import memoryRoutes from './routes/memories';
+import subscriptionRoutes from './routes/subscription';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.get('/health', (req, res) => {
 
 // Public routes
 app.use('/auth', authRoutes);
+app.use('/subscription', subscriptionRoutes);
 
 // Protected routes
 app.use('/memories', authMiddleware, memoryRoutes);

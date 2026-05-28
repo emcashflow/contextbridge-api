@@ -5,7 +5,11 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   apiKey: varchar('api_key', { length: 64 }).notNull().unique(),
-  plan: varchar('plan', { length: 20 }).notNull().default('hobby'),
+  plan: varchar('plan', { length: 20 }).notNull().default('free'),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+  subscriptionStatus: varchar('subscription_status', { length: 20 }),
+  subscriptionCurrentPeriodEnd: timestamp('subscription_current_period_end'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
