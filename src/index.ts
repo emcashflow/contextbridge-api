@@ -127,6 +127,30 @@ app.use('/subscription', subscriptionRoutes);
 // Protected routes
 app.use('/memories', authMiddleware, memoryRoutes);
 
+// Admin: Run migrations (protected by secret)
+app.post('/admin/migrate', async (req, res) => {
+  const secret = req.headers['x-admin-secret'];
+  if (secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const { sql } = await import('drizzle-orm');
+    const { db } = await import('./db');
+
+    await db.execute(sql`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS daily_api_calls INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS last_api_call_reset TIMESTAMP;
+    `);
+
+    res.json({ success: true, message: 'Migration complete' });
+  } catch (error) {
+    console.error('Migration error:', error);
+    res.status(500).json({ error: 'Migration failed', details: String(error) });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
