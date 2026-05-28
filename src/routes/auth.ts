@@ -54,7 +54,8 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
     console.error('Signup error:', error);
-    res.status(500).json({ error: 'Failed to create account' });
+    console.error('Signup error details:', JSON.stringify(error, null, 2));
+    res.status(500).json({ error: 'Failed to create account', details: String(error) });
   }
 });
 
