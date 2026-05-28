@@ -109,4 +109,91 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res) => {
   }
 });
 
+// Protected: Create billing portal session (manage payment methods, invoices)
+router.post('/portal', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, req.user!.id),
+    });
+
+    if (!user || !user.stripeCustomerId) {
+      return res.status(404).json({ error: 'No subscription found' });
+    }
+
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: req.body.return_url || 'https://contextbridge.com/account',
+    });
+
+    res.json({ url: portalSession.url });
+  } catch (error) {
+    console.error('Portal error:', error);
+    res.status(500).json({ error: 'Failed to create portal session' });
+  }
+});
+
+// Protected: Cancel subscription (at period end)
+router.post('/cancel', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, req.user!.id),
+    });
+
+    if (!user || !user.stripeSubscriptionId) {
+      return res.status(404).json({ error: 'No active subscription' });
+    }
+
+    // Cancel at period end (keeps access until then)
+    const subscription = await stripe.subscriptions.update(
+      user.stripeSubscriptionId,
+      { cancel_at_period_end: true }
+    );
+
+    await db.update(users)
+      .set({
+        subscriptionStatus: 'canceling',
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    res.json({
+      message: 'Subscription will cancel at period end',
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    });
+  } catch (error) {
+    console.error('Cancel error:', error);
+    res.status(500).json({ error: 'Failed to cancel subscription' });
+  }
+});
+
+// Protected: Resume subscription (if scheduled to cancel)
+router.post('/resume', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, req.user!.id),
+    });
+
+    if (!user || !user.stripeSubscriptionId) {
+      return res.status(404).json({ error: 'No subscription found' });
+    }
+
+    const subscription = await stripe.subscriptions.update(
+      user.stripeSubscriptionId,
+      { cancel_at_period_end: false }
+    );
+
+    await db.update(users)
+      .set({
+        subscriptionStatus: 'active',
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    res.json({ message: 'Subscription resumed successfully' });
+  } catch (error) {
+    console.error('Resume error:', error);
+    res.status(500).json({ error: 'Failed to resume subscription' });
+  }
+});
+
 export default router;
