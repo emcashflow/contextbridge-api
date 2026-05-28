@@ -50,8 +50,8 @@ router.post('/remember', enforceApiLimit, enforceMemoryLimit, async (req: AuthRe
     
     if (parsed.sessionId) insertData.sessionId = parsed.sessionId;
     if (parsed.agentId) insertData.agentId = parsed.agentId;
-    // Pass ISO string directly - Drizzle will handle it
-    if (expiresAt) insertData.expiresAt = expiresAt.toISOString();
+    // Use SQL template literal for timestamp to ensure proper serialization
+    if (expiresAt) insertData.expiresAt = sql`${expiresAt.toISOString()}`;
     
     console.log('Creating memory:', { 
       userId, 
