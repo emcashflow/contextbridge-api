@@ -41,15 +41,20 @@ router.post('/remember', enforceApiLimit, enforceMemoryLimit, async (req: AuthRe
       const retentionDays = PLAN_LIMITS[plan].retentionDays;
       expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000);
     }
+    
+    console.log('Creating memory:', { userId, content: parsed.content.substring(0, 50), expiresAt });
 
-    const [memory] = await db.insert(memories).values({
+    const insertData: any = {
       userId,
-      sessionId: parsed.sessionId,
-      agentId: parsed.agentId,
       content: parsed.content,
       metadata: parsed.metadata || {},
-      expiresAt,
-    }).returning();
+    };
+    
+    if (parsed.sessionId) insertData.sessionId = parsed.sessionId;
+    if (parsed.agentId) insertData.agentId = parsed.agentId;
+    if (expiresAt) insertData.expiresAt = expiresAt;
+    
+    const [memory] = await db.insert(memories).values(insertData).returning();
 
     res.json({
       success: true,
