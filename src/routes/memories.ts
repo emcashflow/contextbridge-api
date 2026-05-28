@@ -52,7 +52,8 @@ router.post('/remember', enforceApiLimit, enforceMemoryLimit, async (req: AuthRe
     
     if (parsed.sessionId) insertData.sessionId = parsed.sessionId;
     if (parsed.agentId) insertData.agentId = parsed.agentId;
-    if (expiresAt) insertData.expiresAt = expiresAt.toISOString();
+    // Use SQL literal for timestamp to avoid type issues
+    if (expiresAt) insertData.expiresAt = sql`${expiresAt.toISOString()}`;
     
     const [memory] = await db.insert(memories).values(insertData).returning();
 
