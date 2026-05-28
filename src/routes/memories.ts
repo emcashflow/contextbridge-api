@@ -4,6 +4,7 @@ import { db } from '../db';
 import { memories } from '../db/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { AuthRequest } from '../middleware/auth';
+import { enforceMemoryLimit, enforceApiLimit, getUserPlan, applyRetentionPolicy, PLAN_LIMITS } from '../middleware/planLimits';
 
 const router = Router();
 
@@ -22,15 +23,23 @@ const recallSchema = z.object({
   limit: z.number().min(1).max(100).default(10),
 });
 
-// POST /remember - Store a memory
-router.post('/remember', async (req: AuthRequest, res) => {
+// POST /remember - Store a memory (enforces plan limits)
+router.post('/remember', enforceApiLimit, enforceMemoryLimit, async (req: AuthRequest, res) => {
   try {
     const parsed = rememberSchema.parse(req.body);
     const userId = req.user!.id;
+    const plan = req.plan!;
+
+    // Apply retention policy before adding new memory
+    await applyRetentionPolicy(userId, plan);
 
     let expiresAt: Date | undefined;
     if (parsed.ttl) {
       expiresAt = new Date(Date.now() + parsed.ttl * 1000);
+    } else {
+      // Apply plan retention limit
+      const retentionDays = PLAN_LIMITS[plan].retentionDays;
+      expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000);
     }
 
     const [memory] = await db.insert(memories).values({
@@ -48,7 +57,10 @@ router.post('/remember', async (req: AuthRequest, res) => {
         id: memory.id,
         content: memory.content,
         createdAt: memory.createdAt,
+        expiresAt: memory.expiresAt,
       },
+      plan,
+      remainingMemories: PLAN_LIMITS[plan].maxMemories - (await getMemoryCount(userId)),
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -59,8 +71,8 @@ router.post('/remember', async (req: AuthRequest, res) => {
   }
 });
 
-// GET /recall - Retrieve memories
-router.get('/recall', async (req: AuthRequest, res) => {
+// GET /recall - Retrieve memories (enforces API limits)
+router.get('/recall', enforceApiLimit, async (req: AuthRequest, res) => {
   try {
     const parsed = recallSchema.parse({
       sessionId: req.query.sessionId,
@@ -114,8 +126,8 @@ router.get('/recall', async (req: AuthRequest, res) => {
   }
 });
 
-// DELETE /forget/:id - Delete a specific memory
-router.delete('/forget/:id', async (req: AuthRequest, res) => {
+// DELETE /forget/:id - Delete a specific memory (enforces API limits)
+router.delete('/forget/:id', enforceApiLimit, async (req: AuthRequest, res) => {
   try {
     const memoryId = req.params.id;
     const userId = req.user!.id;
@@ -138,8 +150,8 @@ router.delete('/forget/:id', async (req: AuthRequest, res) => {
   }
 });
 
-// DELETE /forget-all - Delete all memories (with optional filters)
-router.delete('/forget-all', async (req: AuthRequest, res) => {
+// DELETE /forget-all - Delete all memories (with optional filters, enforces API limits)
+router.delete('/forget-all', enforceApiLimit, async (req: AuthRequest, res) => {
   try {
     const { sessionId, agentId } = req.query;
     const userId = req.user!.id;
@@ -165,5 +177,15 @@ router.delete('/forget-all', async (req: AuthRequest, res) => {
     res.status(500).json({ error: 'Failed to delete memories' });
   }
 });
+
+// Helper function to get current memory count
+async function getMemoryCount(userId: string): Promise<number> {
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(memories)
+    .where(eq(memories.userId, userId));
+  
+  return result[0]?.count || 0;
+}
 
 export default router;

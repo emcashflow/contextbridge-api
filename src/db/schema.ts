@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, varchar, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, varchar, jsonb, integer } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -10,6 +10,8 @@ export const users = pgTable('users', {
   stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
   subscriptionStatus: varchar('subscription_status', { length: 20 }),
   subscriptionCurrentPeriodEnd: timestamp('subscription_current_period_end'),
+  dailyApiCalls: integer('daily_api_calls').default(0),
+  lastApiCallReset: timestamp('last_api_call_reset'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
