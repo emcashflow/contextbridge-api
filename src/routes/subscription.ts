@@ -5,7 +5,7 @@ import Stripe from 'stripe';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -46,14 +46,14 @@ router.get('/pricing', (req, res) => {
 });
 
 // Protected: Create checkout session
-router.post('/checkout', authMiddleware, async (req, res) => {
+router.post('/checkout', authMiddleware, async (req: AuthRequest, res) => {
   try {
     if (!STRIPE_PRICE_ID) {
       return res.status(500).json({ error: 'Stripe price ID not configured' });
     }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, req.userId),
+      where: eq(users.id, req.user!.id),
     });
 
     if (!user) {
@@ -88,10 +88,10 @@ router.post('/checkout', authMiddleware, async (req, res) => {
 });
 
 // Protected: Get subscription status
-router.get('/status', authMiddleware, async (req, res) => {
+router.get('/status', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const user = await db.query.users.findFirst({
-      where: eq(users.id, req.userId),
+      where: eq(users.id, req.user!.id),
     });
 
     if (!user) {
