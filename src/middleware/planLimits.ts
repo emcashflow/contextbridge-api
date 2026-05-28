@@ -148,7 +148,7 @@ export async function applyRetentionPolicy(userId: string, plan: 'free' | 'pro')
   await db.delete(memories)
     .where(and(
       eq(memories.userId, userId),
-      sql`${memories.createdAt} < ${cutoffDate}`
+      sql`${memories.createdAt} < ${cutoffDate.toISOString()}`
     ));
 }
 
