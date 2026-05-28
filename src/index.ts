@@ -15,8 +15,13 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(helmet());
+const corsOrigin = process.env.CORS_ORIGIN;
+if (!corsOrigin) {
+  console.warn('⚠️  CORS_ORIGIN not set - API will reject cross-origin requests');
+}
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: corsOrigin || false,
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'X-API-Key'],
 }));
@@ -130,7 +135,12 @@ app.use('/memories', authMiddleware, memoryRoutes);
 // Admin: Run migrations (protected by secret)
 app.post('/admin/migrate', async (req, res) => {
   const secret = req.headers['x-admin-secret'];
-  const expectedSecret = process.env.ADMIN_SECRET || 'contextbridge_admin_2026';
+  const expectedSecret = process.env.ADMIN_SECRET;
+  
+  if (!expectedSecret) {
+    return res.status(500).json({ error: 'Admin secret not configured' });
+  }
+  
   if (secret !== expectedSecret) {
     return res.status(401).json({ error: 'Unauthorized' });
   }

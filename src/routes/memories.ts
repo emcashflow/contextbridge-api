@@ -80,7 +80,7 @@ router.post('/remember', enforceApiLimit, enforceMemoryLimit, async (req: AuthRe
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
     console.error('Remember error:', error);
-    res.status(500).json({ error: 'Failed to store memory', details: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to store memory' });
   }
 });
 

@@ -2,11 +2,21 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 const router = Router();
+
+// Rate limiting for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: { error: 'Too many attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -14,7 +24,7 @@ const signupSchema = z.object({
 });
 
 // POST /auth/signup
-router.post('/signup', async (req, res) => {
+router.post('/signup', authLimiter, async (req, res) => {
   try {
     const parsed = signupSchema.parse(req.body);
 
@@ -54,13 +64,12 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
     console.error('Signup error:', error);
-    console.error('Signup error details:', JSON.stringify(error, null, 2));
-    res.status(500).json({ error: 'Failed to create account', details: String(error) });
+    res.status(500).json({ error: 'Failed to create account' });
   }
 });
 
 // POST /auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
