@@ -104,7 +104,7 @@ export async function enforceApiLimit(
     if (!lastReset || !isSameDay(now, lastReset)) {
       // Reset counter
       await db.update(users)
-        .set({ dailyApiCalls: 0, lastApiCallReset: now })
+        .set({ dailyApiCalls: 0, lastApiCallReset: now.toISOString() })
         .where(eq(users.id, userId));
       currentCalls = 0;
     }
@@ -148,7 +148,7 @@ export async function applyRetentionPolicy(userId: string, plan: 'free' | 'pro')
   await db.delete(memories)
     .where(and(
       eq(memories.userId, userId),
-      sql`${memories.createdAt} < ${cutoffDate}`
+      sql`${memories.createdAt} < ${cutoffDate.toISOString()}`
     ));
 }
 
