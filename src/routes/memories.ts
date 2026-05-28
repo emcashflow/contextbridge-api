@@ -42,7 +42,14 @@ router.post('/remember', enforceApiLimit, enforceMemoryLimit, async (req: AuthRe
       expiresAt = new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000);
     }
     
-    console.log('Creating memory:', { userId, content: parsed.content.substring(0, 50), expiresAt });
+    console.log('Creating memory:', { 
+      userId, 
+      content: parsed.content.substring(0, 50), 
+      expiresAt: expiresAt?.toISOString(),
+      expiresAtType: typeof expiresAt,
+      insertDataExpiresAt: insertData.expiresAt,
+      insertDataExpiresAtType: typeof insertData.expiresAt
+    });
 
     const insertData: any = {
       userId,
