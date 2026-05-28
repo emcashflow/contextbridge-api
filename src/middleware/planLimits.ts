@@ -22,10 +22,11 @@ export const PLAN_LIMITS = {
 export async function getUserPlan(userId: string): Promise<'free' | 'pro'> {
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
-    columns: { subscriptionStatus: true },
+    columns: { subscriptionStatus: true, plan: true },
   });
   
-  return user?.subscriptionStatus === 'active' ? 'pro' : 'free';
+  // Check both subscription status AND plan field
+  return (user?.subscriptionStatus === 'active' || user?.plan === 'pro') ? 'pro' : 'free';
 }
 
 // Check if user has exceeded memory limit
