@@ -181,11 +181,11 @@ router.delete('/forget-all', enforceApiLimit, async (req: AuthRequest, res) => {
 // Helper function to get current memory count
 async function getMemoryCount(userId: string): Promise<number> {
   const result = await db
-    .select({ count: sql<number>`count(*)` })
+    .select({ count: sql`count(*)` })
     .from(memories)
     .where(eq(memories.userId, userId));
   
-  return result[0]?.count || 0;
+  return Number(result[0]?.count) || 0;
 }
 
 export default router;
